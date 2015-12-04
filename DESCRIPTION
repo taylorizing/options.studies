@@ -1,0 +1,17 @@
+Package: options.studies
+Type: Package
+Title: Functions to perform backtesting of common option trade strategies
+Version: 0.1.1
+Authors@R: c(
+    person("Jason", "Taylor", , "jason@themechanicalbear.com", c("aut", "cre"))
+    )
+Maintainer: <jason@themechanicalbear.com>
+Description: Library enables customer to use functions to perform backtesting
+    of options strategies using data loaded from the options.data package.
+LazyData: no
+Imports: lubridate, dplyr, ggvis, data.table, scales, RcppBDT, shinythemes, shiny
+URL: https://github.com/themechanicalbear/options.studies
+BugReports: https://github.com/themechanicalbear/options.data/issues
+Depends: R (>= 3.2.2), lubridate, dplyr, ggvis, data.table, scales, RcppBDT, shinythemes, shiny
+License: MIT + file LICENSE
+RoxygenNote: 5.0.0
