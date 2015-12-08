@@ -1,7 +1,7 @@
 Package: options.studies
 Type: Package
 Title: Functions to perform backtesting of common option trade strategies
-Version: 0.1.1
+Version: 0.1.2
 Authors@R: c(
     person("Jason", "Taylor", , "jason@themechanicalbear.com", c("aut", "cre"))
     )

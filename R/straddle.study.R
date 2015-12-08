@@ -20,9 +20,9 @@ straddle <- function(progress.int, t) {
     trade.data <- dplyr::filter(complete.data, expiration <= max.date)
     
     # Filter first day month/week data to dates we have options chains for
-    first.day <- dplyr::filter(first.day, open.date >= min.date)
+    first.day <- dplyr::filter(first.day, date >= min.date)
     
-    for (i in unique(first.day$open.date))  {
+    for (i in unique(first.day$date))  {
       incProgress(progress.int)
       t = t + 1
       start.data <- dplyr::filter(trade.data, date == i) # Set open date
