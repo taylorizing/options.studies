@@ -10,7 +10,12 @@ strangle <- function(progress.int, t) {
     c.positions <- data.frame()
     put.results <- data.frame()
     call.results <- data.frame()
-    results <- data.frame()
+    if (exists("results") && is.data.frame(get("results"))) {
+      t <- max(results$trade.num)
+    } else {
+      results <- data.frame()
+      t <- 0
+    }
     
     # Set the first possible opening date based on the stock loaded
     min.date <- min(complete.data$date)
@@ -25,7 +30,7 @@ strangle <- function(progress.int, t) {
     
     for (i in unique(first.day$date))  {
       incProgress(progress.int)
-      t = t + 1
+      t <- t + 1
       start.data <- dplyr::filter(trade.data, date == i) # Set open date
       # Check for data set and that iv rank is within range
       if (nrow(start.data) > 0 && start.data[1, iv.rank] >= low.iv &&
@@ -258,17 +263,48 @@ strangle <- function(progress.int, t) {
       cs <- df1$call.strike
       cop <- df1$call.open.price
       tp <- pp + cp
+      year <- 0
+      days.held <- 0
+      has_profit <- 0
+      
       this.case <- as.data.frame(matrix(nrow = 1,
                                         c(t, ps, od, cd, d, pop, iv, rsi,
-                                        pp, cp, cs, cop, tp, er)),
+                                        pp, cp, cs, cop, tp, er, year,
+                                        days.held, has_profit)),
                                  stringsAsFactors = FALSE)
+      colnames(this.case) <- c("trade.num", "put.strike", "open.date", "close.date",
+                             "dte", "put.credit", "open.ivrank", "open.rsi",
+                             "put.profit", "call.profit", "call.strike",
+                             "call.credit", "profit", "exit.reason", "year",
+                             "days.held", "has_profit")
+      this.case <- dplyr::mutate(this.case,
+                               trade.num = as.integer(trade.num),
+                               put.strike = as.numeric(put.strike),
+                               open.date = as.Date(as.numeric(open.date),
+                                                   origin = "1970-01-01"),
+                               close.date = as.Date(as.numeric(close.date),
+                                                    origin = "1970-01-01"),
+                               dte = as.numeric(dte),
+                               put.credit = as.numeric(put.credit) * 100,
+                               open.ivrank = as.numeric(open.ivrank),
+                               open.rsi = as.numeric(open.rsi),
+                               put.profit = as.numeric(put.profit),
+                               call.profit = as.numeric(call.profit),
+                               call.strike = as.numeric(call.strike),
+                               call.credit = as.numeric(call.credit) * 100,
+                               profit = as.numeric(profit),
+                               year = year(open.date),
+                               days.held = as.numeric(close.date) - as.numeric(open.date),
+                               has_profit = ifelse(profit > 0, "Yes", "No"))
       results <- rbind(results, this.case)
     }
-    
+  }) # End closing trades progress bar
+  shiny::withProgress(message = "Progress Bar", detail = "Creating Plot", value = .95, {
     colnames(results) <- c("trade.num", "put.strike", "open.date", "close.date",
                            "dte", "put.credit", "open.ivrank", "open.rsi",
                            "put.profit", "call.profit", "call.strike",
-                           "call.credit", "profit", "exit.reason")
+                           "call.credit", "profit", "exit.reason", "year",
+                           "days.held", "has_profit")
     results <- dplyr::mutate(results,
                              trade.num = as.integer(trade.num),
                              put.strike = as.numeric(put.strike),
@@ -276,7 +312,6 @@ strangle <- function(progress.int, t) {
                                                  origin = "1970-01-01"),
                              close.date = as.Date(as.numeric(close.date),
                                                   origin = "1970-01-01"),
-                             year = year(open.date),
                              dte = as.numeric(dte),
                              put.credit = as.numeric(put.credit) * 100,
                              open.ivrank = as.numeric(open.ivrank),
@@ -285,11 +320,10 @@ strangle <- function(progress.int, t) {
                              call.profit = as.numeric(call.profit),
                              call.strike = as.numeric(call.strike),
                              call.credit = as.numeric(call.credit) * 100,
-                             days.held = as.numeric(close.date) - as.numeric(open.date),
                              profit = as.numeric(profit),
+                             year = year(open.date),
+                             days.held = as.numeric(close.date) - as.numeric(open.date),
                              has_profit = ifelse(profit > 0, "Yes", "No"))
-  }) # End closing trades progress bar
-  shiny::withProgress(message = "Progress Bar", detail = "Creating Plot", value = .95, {
     # Send results to global data frame for viewing
     results.table <- select(results,
                             open.date, close.date, dte, days.held, open.ivrank,
@@ -332,7 +366,13 @@ strangle <- function(progress.int, t) {
                   0, scales::percent(length(which(results$exit.reason == "Earnings")) / num_t)),
            envir = .GlobalEnv)
   }) # End creating plot progress bar
+  
   # Send results to global environment for further processing in main script
   assign("results", results, envir = .GlobalEnv)
   assign("results.table", results.table, envir = .GlobalEnv)
+  #assign("t", as.integer(t), envir = .GlobalEnv) # All stocks will have unique tradenums
+  rm(p.positions)
+  rm(c.positions)
+  rm(put.results)
+  rm(call.results)
 }
