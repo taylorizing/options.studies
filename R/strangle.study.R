@@ -35,16 +35,16 @@ strangle <- function(progress.int, t) {
       # Check for data set and that iv rank is within range
       if (nrow(start.data) > 0 && start.data[1, iv.rank] >= low.iv &&
           start.data[1, iv.rank] <= high.iv) {
-        put.data <- dplyr::filter(trade.data, call.put == "P")
-        put.data <- dplyr::mutate(start.data, dte.diff = abs(o.dte - dte))
+        put.data <- dplyr::filter(start.data, call.put == "P")
+        put.data <- dplyr::mutate(put.data, dte.diff = abs(o.dte - dte))
         # Closest to DTE
         put.data <- dplyr::filter(put.data, dte.diff == min(dte.diff))
         put.data <- dplyr::filter(put.data, delta >= p.delta)
         put.data <- dplyr::filter(put.data, delta <= p.delta.lim)
         put.trade <- dplyr::filter(put.data, delta == min(delta))
         
-        call.data <- dplyr::filter(trade.data, call.put == "C")
-        call.data <- dplyr::filter(start.data, dte == put.trade$dte)
+        call.data <- dplyr::filter(start.data, call.put == "C")
+        call.data <- dplyr::filter(call.data, dte == put.trade$dte)
         call.data <- dplyr::filter(call.data, delta <= c.delta)
         call.data <- dplyr::filter(call.data, delta >= c.delta.lim)
         call.trade <- dplyr::filter(call.data, delta == max(delta))
@@ -198,6 +198,7 @@ strangle <- function(progress.int, t) {
     call.results <- dplyr::mutate(call.results, year = year(date.y))
     call.results <- dplyr::select(call.results,
                                   trade.num,
+                                  symbol = symbol.x,
                                   call.expiration = expiration.x,
                                   call.close.date = date.x,
                                   call.strike = strike.x,
@@ -226,6 +227,7 @@ strangle <- function(progress.int, t) {
     put.results <- dplyr::select(put.results,
                                  put.expiration = expiration.x,
                                  trade.num,
+                                 symbol = symbol.x,
                                  put.close.date = date.x,
                                  put.strike = strike.x,
                                  put.close.price = close.price,
@@ -248,6 +250,7 @@ strangle <- function(progress.int, t) {
     
     # Combine put and call results to enable calculation of totals
     for (i in 1:nrow(put.results))  {
+      sym <- put.results[i, symbol]
       t <- put.results[i, trade.num]
       ps <- put.results[i, put.strike]
       od <- put.results[i, put.open.date]
@@ -268,15 +271,15 @@ strangle <- function(progress.int, t) {
       has_profit <- 0
       
       this.case <- as.data.frame(matrix(nrow = 1,
-                                        c(t, ps, od, cd, d, pop, iv, rsi,
+                                        c(sym, t, ps, od, cd, d, pop, iv, rsi,
                                         pp, cp, cs, cop, tp, er, year,
                                         days.held, has_profit)),
                                  stringsAsFactors = FALSE)
-      colnames(this.case) <- c("trade.num", "put.strike", "open.date", "close.date",
-                             "dte", "put.credit", "open.ivrank", "open.rsi",
-                             "put.profit", "call.profit", "call.strike",
-                             "call.credit", "profit", "exit.reason", "year",
-                             "days.held", "has_profit")
+      colnames(this.case) <- c("symbol", "trade.num", "put.strike", "open.date",
+                               "close.date", "dte", "put.credit", "open.ivrank",
+                               "open.rsi", "put.profit", "call.profit",
+                               "call.strike", "call.credit", "profit",
+                               "exit.reason", "year", "days.held", "has_profit")
       this.case <- dplyr::mutate(this.case,
                                trade.num = as.integer(trade.num),
                                put.strike = as.numeric(put.strike),
@@ -300,11 +303,11 @@ strangle <- function(progress.int, t) {
     }
   }) # End closing trades progress bar
   shiny::withProgress(message = "Progress Bar", detail = "Creating Plot", value = .95, {
-    colnames(results) <- c("trade.num", "put.strike", "open.date", "close.date",
-                           "dte", "put.credit", "open.ivrank", "open.rsi",
-                           "put.profit", "call.profit", "call.strike",
-                           "call.credit", "profit", "exit.reason", "year",
-                           "days.held", "has_profit")
+    colnames(results) <- c("symbol", "trade.num", "put.strike", "open.date",
+                           "close.date", "dte", "put.credit", "open.ivrank",
+                           "open.rsi", "put.profit", "call.profit",
+                           "call.strike", "call.credit", "profit", "exit.reason",
+                           "year", "days.held", "has_profit")
     results <- dplyr::mutate(results,
                              trade.num = as.integer(trade.num),
                              put.strike = as.numeric(put.strike),
@@ -326,8 +329,9 @@ strangle <- function(progress.int, t) {
                              has_profit = ifelse(profit > 0, "Yes", "No"))
     # Send results to global data frame for viewing
     results.table <- select(results,
-                            open.date, close.date, dte, days.held, open.ivrank,
-                            put.strike, call.strike, exit.reason, profit)
+                            symbol, open.date, close.date, dte, days.held,
+                            open.ivrank, put.strike, call.strike, exit.reason,
+                            profit)
     
     # Write out closing dates to csv so can be used as the open dates with the custom open option
     close.dates <- select(results, close.date, exit.reason)
@@ -370,7 +374,6 @@ strangle <- function(progress.int, t) {
   # Send results to global environment for further processing in main script
   assign("results", results, envir = .GlobalEnv)
   assign("results.table", results.table, envir = .GlobalEnv)
-  #assign("t", as.integer(t), envir = .GlobalEnv) # All stocks will have unique tradenums
   rm(p.positions)
   rm(c.positions)
   rm(put.results)
