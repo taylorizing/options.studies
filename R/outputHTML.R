@@ -13,7 +13,7 @@ outputHTML <- function(){
     str.study <- paste(" - ", study)
     str.stock <- paste(" - ", stock)
     str.openOption <- paste(" ", openOption)
-    HTML(paste(str.text, str.openOption, str.stock, str.study))
+    h2(paste(str.text, str.openOption, str.stock, str.study))
   })
   output$details <- renderUI({
     str.dte <- paste("(", o.dte, " DTE,")

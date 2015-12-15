@@ -335,7 +335,7 @@ strangle <- function(progress.int, t) {
     
     # Write out closing dates to csv so can be used as the open dates with the custom open option
     close.dates <- select(results, close.date, exit.reason)
-    write.csv(close.dates, file = "Data/customDates.csv")
+    write.csv(close.dates, file = "data/customDates.csv")
     
     # Calculate totals for display
     assign("num_t", nrow(results), envir = .GlobalEnv)
