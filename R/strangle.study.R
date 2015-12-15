@@ -158,10 +158,10 @@ strangle <- function(progress.int, t) {
       }
       # Close prior to earnings
       if (earn.close == "Yes")  {
-        e.dates <- dplyr::filter(earn.dates, earn.date > od, earn.date < e)
-        e.dates <- dplyr::filter(e.dates, earn.date == min(earn.date))
+        e.dates <- dplyr::filter(earnings.close, date > od, date < e)
+        e.dates <- dplyr::filter(e.dates, date == min(date))
         if (nrow(e.dates) > 0 ) {
-          e.date <<- as.Date(e.dates$earn.date)
+          e.date <- as.Date(e.dates$date)
           e.put.close <- dplyr::filter(trade.data, date == e.date,
                                        expiration == e, strike == ps)
           e.put.close <- dplyr::filter(e.put.close, call.put == "P")
@@ -372,6 +372,8 @@ strangle <- function(progress.int, t) {
   }) # End creating plot progress bar
   
   # Send results to global environment for further processing in main script
+  beep(4)
+  
   assign("results", results, envir = .GlobalEnv)
   assign("results.table", results.table, envir = .GlobalEnv)
   rm(p.positions)
