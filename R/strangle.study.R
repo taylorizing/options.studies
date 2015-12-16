@@ -70,7 +70,7 @@ strangle <- function(progress.int, t) {
       cs <- c.positions[i, strike]
       ps <- p.positions[i, strike]
       j <- c.positions[i, trade.num]
-      
+      print(od)
       # Close the put at expiration
       put.close <- dplyr::filter(trade.data, date == e, expiration == e,
                                  strike == ps, call.put == "P")
@@ -192,6 +192,7 @@ strangle <- function(progress.int, t) {
     call.results <- dplyr::ungroup(call.results)
     
     # Merge the opening and closing data frames to calculate profit loss
+    
     merge.call.results <- merge(call.results, c.positions, by = "trade.num")
     call.results <- dplyr::mutate(merge.call.results,
                                   profit.loss = 100 * (mid.price.y - close.price))
@@ -334,8 +335,8 @@ strangle <- function(progress.int, t) {
                             profit)
     
     # Write out closing dates to csv so can be used as the open dates with the custom open option
-    close.dates <- select(results, close.date, exit.reason)
-    write.csv(close.dates, file = "data/customDates.csv")
+    # close.dates <- select(results, close.date, exit.reason)
+    # write.csv(close.dates, file = "data/customDates.csv")
     
     # Calculate totals for display
     assign("num_t", nrow(results), envir = .GlobalEnv)
@@ -372,8 +373,6 @@ strangle <- function(progress.int, t) {
   }) # End creating plot progress bar
   
   # Send results to global environment for further processing in main script
-  beep(4)
-  
   assign("results", results, envir = .GlobalEnv)
   assign("results.table", results.table, envir = .GlobalEnv)
   rm(p.positions)
