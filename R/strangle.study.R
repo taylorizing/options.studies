@@ -70,7 +70,7 @@ strangle <- function(progress.int, t) {
       cs <- c.positions[i, strike]
       ps <- p.positions[i, strike]
       j <- c.positions[i, trade.num]
-      print(od)
+      
       # Close the put at expiration
       put.close <- dplyr::filter(trade.data, date == e, expiration == e,
                                  strike == ps, call.put == "P")
